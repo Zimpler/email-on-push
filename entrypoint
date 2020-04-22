@@ -1,0 +1,62 @@
+#! /usr/bin/python3
+
+import os
+import sys
+import json
+import yagmail
+
+
+def read_event():
+    with open(os.environ['GITHUB_EVENT_PATH']) as event_file:
+        event = json.load(event_file)
+        return event
+
+
+def build_subject(event):
+    data = {
+        'org': event['repository']['organization'],
+        'repo': event['repository']['name'],
+        'num_commits': len(event['commits']),
+    }
+
+    res = '{org}/{repo}: {num_commits} commits'.format(**data)
+
+    return res
+
+
+def build_body(event):
+    data = {
+        'org': event['repository']['organization'],
+        'repo': event['repository']['name'],
+        'compare': event['compare'],
+    }
+
+    opening = [
+        'New commits have been pushed to {org}/{repo}'.format(**data),
+        '',
+        'Complete diff: {compare}'.format(**data),
+        '',
+    ]
+    commits = [
+        '- {}\n  {}'.format(c['message'].splitlines()[0], c['url'])
+        for c in event['commits']
+    ]
+    ending = ['', 'From your friendly email-on-push action']
+
+    return '\n'.join(opening + commits + ending)
+
+
+def send_email(subject, contents):
+    yag = yagmail.SMTP(user=os.environ['SMTP_USER'],
+                       password=os.environ['SMTP_PASSWORD'])
+    yag.send(to=os.environ['TO'], subject=subject, contents=contents)
+
+
+def main():
+    event = read_event()
+    send_email(build_subject(event), build_body(event))
+    sys.exit()
+
+
+if __name__ == '__main__':
+    main()
