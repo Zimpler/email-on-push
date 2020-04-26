@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import yagmail
+from datetime import datetime
 
 
 def read_event():
@@ -13,13 +14,16 @@ def read_event():
 
 
 def build_subject(event):
+    pushed_at = datetime.fromtimestamp(int(
+        event['repository']['pushed_at'])).isoformat()
     data = {
         'org': event['repository']['organization'],
         'repo': event['repository']['name'],
+        'pushed_at': pushed_at,
         'num_commits': len(event['commits']),
     }
 
-    res = '{org}/{repo}: {num_commits} commits'.format(**data)
+    res = '{pushed_at} - {org}/{repo}: {num_commits} commits'.format(**data)
 
     return res
 
