@@ -24,6 +24,13 @@ def build_subject(event):
     return res
 
 
+def include_commit(commit):
+    message = commit['message']
+    do_include = message.find('[push-email skip]') == -1 and message.find(
+        '[skip push-email]') == -1
+    return do_include
+
+
 def build_body(event):
     data = {
         'org': event['repository']['organization'],
@@ -39,11 +46,14 @@ def build_body(event):
     ]
     commits = [
         '- {}\n  {}'.format(c['message'].splitlines()[0], c['url'])
-        for c in event['commits']
+        for c in event['commits'] if include_commit(c)
     ]
     ending = ['', 'From your friendly email-on-push action']
 
-    return '\n'.join(opening + commits + ending)
+    if commits != []:
+        return '\n'.join(opening + commits + ending)
+    else:
+        return None
 
 
 def send_email(subject, contents):
@@ -54,7 +64,9 @@ def send_email(subject, contents):
 
 def main():
     event = read_event()
-    send_email(build_subject(event), build_body(event))
+    body = build_body(event)
+    if body:
+        send_email(build_subject(event), body)
     sys.exit()
 
 
