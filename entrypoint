@@ -3,7 +3,8 @@
 import os
 import sys
 import json
-import yagmail
+import smtplib
+from email.mime.text import MIMEText
 from datetime import datetime
 
 
@@ -44,26 +45,32 @@ def build_body(event):
 
     opening = [
         'New commits have been pushed to {org}/{repo}'.format(**data),
-        '',
         'Complete diff: {compare}'.format(**data),
-        '',
     ]
     commits = [
         '- {}\n  {}'.format(c['message'].splitlines()[0], c['url'])
         for c in event['commits'] if include_commit(c)
     ]
-    ending = ['', 'From your friendly email-on-push action']
+    ending = ['From your friendly email-on-push action']
 
     if commits != []:
-        return '\n'.join(opening + commits + ending)
+        return '\n\n'.join(opening + commits + ending)
     else:
         return None
 
 
 def send_email(subject, contents):
-    yag = yagmail.SMTP(user=os.environ['SMTP_USER'],
-                       password=os.environ['SMTP_PASSWORD'])
-    yag.send(to=os.environ['TO'], subject=subject, contents=contents)
+    msg = MIMEText(contents)
+    msg['Subject'] = subject
+    msg['From'] = "Email-On-Push <{}>".format(os.environ['SMTP_USER'])
+    msg['To'] = os.environ['TO']
+
+    s = smtplib.SMTP(host='smtp.gmail.com', port=587)
+    s.ehlo()
+    s.starttls()
+    s.login(os.environ['SMTP_USER'], os.environ['SMTP_PASSWORD'])
+    s.send_message(msg=msg)
+    s.close()
 
 
 def main():
