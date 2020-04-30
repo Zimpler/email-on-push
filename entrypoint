@@ -48,7 +48,8 @@ def build_body(event):
         'Complete diff: {compare}'.format(**data),
     ]
     commits = [
-        '- {}\n  {}'.format(c['message'].splitlines()[0], c['url'])
+        '- {} - {}\n  {}'.format(c['message'].splitlines()[0],
+                                 c['author']['name'], c['url'])
         for c in event['commits'] if include_commit(c)
     ]
     ending = ['From your friendly email-on-push action']
