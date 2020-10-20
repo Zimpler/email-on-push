@@ -1,7 +1,9 @@
 name: Send an email on pushes to master
 on:
   push:
-    branches: [master]
+    branches:
+      - main
+      - master
 
 jobs:
   email-on-push:
@@ -9,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: email-on-push
-        uses: Zimpler/email-on-push@master
+        uses: Zimpler/email-on-push@main
         env:
           SMTP_USER: ${{ secrets.MAIL_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
