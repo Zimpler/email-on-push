@@ -1,4 +1,4 @@
-FROM alpine:3.11
+FROM ghcr.io/zimpler/alpine:3.12
 
 RUN apk add jq python3
 
